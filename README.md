@@ -1,160 +1,393 @@
 # Module 1 Final Project
 
+## README Outline
+
+Within this README file you will find:
+1. Introduction
+2. Overview of Repository Contents
+3. Project Objectives
+4. Overview of the Process:
+    - Performance Metrics
+    - Collecting Data (API Call, Web Scraping, and Provided Files)
+    - Movie Runtime Analysis
+    - Movie Genre Analysis
+    - Gross Domestic Box Office Spend Analysis
+    - Writers Analysis
+5. Findings & Recommendations
+6. Conclusion
+
 ## Introduction
 
-In this lesson, we'll review all of the guidelines and specifications for the final project for Module 1.
+Explore what type of films are currently doing the best at the box office, and translate those findings into actionable insights that can be used by the CEO of Microsoft.  
 
-## Objectives
+## Repository Contents
 
-You will be able to:
+Within this github repository you will find the following files:
+1. `README.md`
+2. `student.ipynb` - jupyter notebook containing all code and analyses
+3. `placeholder for presentation` - non-technical presentation presenting findings, and recommendations
+4. `imdb.title.ratings.csv` - CSV file containing data from IMDB, includes: IMDB Movie ID, Average Rating, and Number of Votes
+5. `imdb.title.crew.csv` - CSV file containing data from IMDB, includes: IMDB Movie IDs, Director IDs, and Writer IDs
+6. `imdb.name.basics.csv` - CSV file containing data on actors, writers, producers, etc. from IMDB, includes: IMDB Movie IDs, Primary Name of Individual, Birth Year of Individual, Death Year of Individual, Primary Profession of Individual, and Known For Titles (movies the individual is associated with)
+7. `Visualizations` - directory containing image files used throughout this README
 
-* Describe all required aspects of the final project for Module 1
-* Describe all required deliverables
-* Describe what constitutes a successful project
-* Describe what the experience of the project review should be like
+## Project Objectives
 
-## Final Project Summary
+In my analysis of which movies perform best, I decided to focus on answering the following questions:
 
-You've made it all the way through the first module of this course - take a minute to celebrate your awesomeness!
+* What length movies and genres / genre combinations tend to produce the most revenue and highest ratings?
+* How has domestic box office spend trended over time, and when is the best time during the year to release a movie?
+* Which writers should be targeted for hire to maximize chances of writing a high grossing movie script?
 
-![awesome](https://raw.githubusercontent.com/learn-co-curriculum/dsc-mod-1-project-v2-1/master/awesome.gif)
+## Overview of Process
 
-All that remains in Module 1 is to put our newfound data science skills to use with a final project! You should expect this project to take between 20 and 25 hours of solid, focused effort. If you're done way quicker, go back and dig in deeper or try some of the optional "level up" suggestions. If you're worried that you're going to get to 30 hrs and still not even have the data imported, reach out to an instructor in Slack ASAP to get some help!
+## Performance Metrics
 
-## The Project
+For the scope of this project, I have used revenue and average ratings as measures of movie performance and success.   
 
-Microsoft sees all the big companies creating original video content, and they want to get in on the fun. They have decided to create a new movie studio, but the problem is they don’t know anything about creating movies. They have hired you to help them better understand the movie industry.
-Your team is charged with doing data analysis and creating a presentation that explores what type of films are currently doing the best at the box office. You must then translate those findings into actionable insights that the CEO can use when deciding what type of films they should be creating.
+## Collecting the Data
 
-# The Dataset
+Data used in this project comes from three sources:
+1. API Calls to !**[The Movie DB (TMDB)](https://www.themoviedb.org/documentation/api)**
+2. Data scraped from !**[Box Office Mojo](https://www.boxofficemojo.com/)**
+3. IMDB CSV files provided by Flatiron
 
-You may scrape or make API calls to get additional data, but included in the repository (in the folder `zippedData`) is some movie-related data from:
-* Box Office Mojo
-* IMDB
-* Rotten Tomatoes
-* TheMovieDB.org
+### TMDB API Calls
+Pull movie data from 2000 to YTD 2020 using TMDB API.  Following API instructions provided by !**[TMDB](https://www.themoviedb.org/documentation/api)**, register for API Key and use API Key to generate Access Token.  
 
-# The Deliverables
+Create headers with access token to authorize API requests. 
 
-For online students, there will be five deliverables for this project (Note: On-campus students may have different requirements, please speak with your instructor):
+```
+headers = {'Authorization': 'Bearer {}'.format(access_token)
+          ,'Content-Type': 'application/json;charset=utf-8'}
+```
 
-1. A well documented **Jupyter Notebook** containing any code you've written for this project and comments explaining it. This work will need to be pushed to your GitHub repository in order to submit your project.  
-2. An organized **README.md** file in the GitHub repository that describes the contents of the repository. This file should be the source of information for navigating through the repository.
-3. A short **Keynote/PowerPoint/Google Slides presentation** (delivered as a PDF export) giving a high-level overview of your methodology and recommendations for non-technical stakeholders. Make sure to also add and commit this pdf of your non-technical presentation to your repository with a file name of presentation.pdf.
-4. **[A Blog Post](https://github.com/learn-co-curriculum/dsc-welcome-blogging-v2-1)**
-5. A **Video Walkthrough** of your non-technical presentation. Some common video recording tools used are Zoom, Quicktime, and Nimbus. After you record your presentation, publish it on a service like YouTube or Google Drive, you will need a link to the video to submit your project.
+This API limits the number of results that can be returned in one request to 20 results per page and a maximum of 500 pages.  As a result, pulling 2000 to 2020 data in one request is not possible.  As a work around, split requests into smaller chunks so API can return data in its entirety. 
 
-Note: On-campus students may have different requirements, please speak with your instructor.
+Create function that returns the number of pages of results returned by API request.
 
-### Jupyter Notebook Must-Haves
+```
+def get_num_pages(url, headers, start_date, end_date):
+    """
+    Takes as input an API url, headers containing authentication information, a start date, and end date.
+    Returns the number of pages of results returned by the API call as an int. 
+    """
+    params = {'release_date.gte': start_date,
+              'release_date.lte': end_date}
+    returned_movies = requests.get(url=url, headers=headers, params=params).json()
+    return returned_movies['total_pages']
+```
 
-For this project, your Jupyter Notebook should meet the following specifications:
+Using `get_num_pages` create a function to pull in all movie data between provided start and end dates.
 
-#### Organization/Code Cleanliness
+```
+def get_movies_data(start_date, end_date, url, headers):
+    """
+    Takes a start date, end date, API url, and headers with authentication information.
+    Uses get_num_pages function to check the number of pages returned by the API.
+    Loops through all pages, requesting data from API, concatenating results to a dataframe.
+    Returns dataframe of movie information between start and end date.
+    """
+    df = pd.DataFrame()
+    num_pages = get_num_pages(url, headers, start_date, end_date)
+    for i in range(1, num_pages+1):
+        parameters = {'primary_release_date.gte': start_date,
+                      'primary_release_data.lte': end_date,
+                      'page': i}
+        request = requests.get(url, headers=headers, params=parameters).json()
+        df = pd.concat([df, pd.DataFrame(request['results'])], sort=False)
+        
+    return df
+```
 
-* The notebook should be well organized, easy to follow,  and code should be commented where appropriate.  
-    * Level Up: The notebook contains well-formatted, professional looking markdown cells explaining any substantial code.  All functions have docstrings that act as professional-quality documentation
-* The notebook is written for technical audiences with a way to both understand your approach and reproduce your results. The target audience for this deliverable is other data scientists looking to validate your findings.
+Create a list of start and end dates (I recommend breaking each year into quarters to ensure API limitations are not met) and use above functions to generate a dataframe of movie information.
 
-#### Visualizations & EDA
+```
+df = pd.DataFrame()
+url = 'https://api.themoviedb.org/3/discover/movie'
 
-* Your project contains at least 4 meaningful data visualizations, with corresponding interpretations. All visualizations are well labeled with axes labels, a title, and a legend (when appropriate)  
-* You pose at least 3 meaningful questions and answer them through EDA.  These questions should be well labeled and easy to identify inside the notebook.
-    * **Level Up**: Each question is clearly answered with a visualization that makes the answer easy to understand.   
-* Your notebook should contain 1 - 2 paragraphs briefly explaining your approach to this project.
+#loop through all start and end dates and make an API call for each date range
+#append results to df
+for i, start_date in enumerate(start_dates):
+    temp_df = get_movies_data(start_date=start_date, end_date=end_dates[i], url=url, headers=headers)
+    df = pd.concat([df, temp_df], sort=False)
+    
+    update_progress(i / (len(start_dates)-1))
+```
+
+Remove movies with release dates in the future and drop duplicate IDs
+```
+movies = movies.loc[movies['release_date'] <= '2020-05-22']
+movies.drop_duplicates(subset='id', inplace=True)
+```
+
+Pull in additional movie data.  Loop through all movie IDs in the dataframe and for each one, call Movie API (!**[Documentation](https://developers.themoviedb.org/3/movies/get-movie-details)**).  Using parameters laid out in documentation did not work for me, so I resorted to using an f string to add the proper URL suffix:
+
+```
+movie_details = []
+for index, movie_id in enumerate(movies['id']):
+    response = requests.get(f'{url}/{movie_id}', headers=headers).json()
+    movie_details.append(response)
+    update_progress(index / len(movies['id']))
+```
+
+Last step is to create dataframe from `movie_details` list:
+
+```
+movies_df = pd.DataFrame(movie_details)
+```
+
+### Web Scraping Box Office Mojo
+!**[Box Office Mojo](https://www.boxofficemojo.com/)** presents a number of box office statistics on its website. To pull this data into a useable format, I scraped Box Office Mojo using BeautifulSoup. 
+
+```
+from bs4 import BeautifulSoup
+url = 'https://www.boxofficemojo.com/month/january/?grossesOption=calendarGrosses'
+html_page = requests.get(url)
+soup = BeautifulSoup(html_page.content, 'html.parser')
+```
+
+create list of months to scrape and empty lists to store scraped data
+
+```
+month_list = ['january', 'february', 'march', 'april', 'may',
+              'june', 'july', 'august', 'september', 'october',
+              'november', 'december']
+months = []
+years = []
+gross_spend = []
+```
+
+Loop through `month_list` and extract relevant data. Given the length of the HTML class associated with the year, I created a variable for this.
+
+```
+#class used in scraping data
+year_class = 'a-text-left mojo-header-column mojo-truncate mojo-field-type-year mojo-sort-column'
+
+#loop through all months and scrape data for all years
+for index, month in enumerate(month_list):
+    url = f'https://www.boxofficemojo.com/month/{month}/?grossesOption=calendarGrosses'
+    html_page = requests.get(url)
+    soup = BeautifulSoup(html_page.content, 'html.parser')
+    
+    for td in soup.findAll('td', class_=year_class):
+        years.append(td.text)
+        months.append(month)
+    
+    for index, td in enumerate(soup.findAll('td', class_='a-text-right mojo-field-type-money')):
+        if index%3 == 0:
+            gross_spend.append(td.text[1:].replace(',', ''))
+```
+
+Last step is to create a dataframe from our scraped results
+
+```
+domestic_spend_df = pd.DataFrame([months, years, gross_spend]).transpose()
+columns = ['month', 'year', 'gross_dom_spend']
+domestic_spend_df.columns = columns
+```
+
+We now have a dataframe we can start analyzing
+
+### Provided IMDB Data
+Read in IMDB CSV files provided by Flatiron
+
+```
+imdb_name_basics = pd.read_csv('imdb.name.basics.csv')
+imdb_title_basics = pd.read_csv('imdb.title.basics.csv')
+imdb_title_crew = pd.read_csv('imdb.title.crew.csv')
+imdb_title_ratings = pd.read_csv('imdb.title.ratings.csv')
+```
+
+## Movie Runtime Analysis
+Use dataframe created from API calls.  Clean dataframe, handle missing values, duplicates, and NaNs. Create subsets of the dataframe for different runtime buckets.
+
+```
+movies_lt_30 = runtime_df.loc[runtime_df['runtime'] <= 30]
+movies_lt_60 = runtime_df.loc[(runtime_df['runtime'] > 30) &
+                              (runtime_df['runtime'] <= 60)]
+movies_lt_90 = runtime_df.loc[(runtime_df['runtime'] > 60) &
+                              (runtime_df['runtime'] <= 90)]
+movies_lt_120 = runtime_df.loc[(runtime_df['runtime'] > 90) &
+                               (runtime_df['runtime'] <= 120)]
+movies_lt_150 = runtime_df.loc[(runtime_df['runtime'] > 120) &
+                               (runtime_df['runtime'] <= 150)]
+movies_lt_180 = runtime_df.loc[(runtime_df['runtime'] > 150) &
+                               (runtime_df['runtime'] <= 180)]
+movies_gt_180 = runtime_df.loc[(runtime_df['runtime'] > 180)]
+```
+
+Compare median revenue of different movie runtimes and plot results
+
+```
+x = ['<30 mins', '30-60 mins', '60-90 mins',
+     '90-120 mins', '120-150 mins', '150-180 mins',
+     '>180 mins']
+y = [sub_30_median, sub_60_median, sub_90_median,
+     sub_120_median, sub_150_median, sub_180_median,
+     gt_180_median]
+colors = ['lightsalmon' if (x < max(y)) else 'darkred' for x in y]
+
+plt.figure(figsize=(10,5))
+sns.barplot(x=x, y=y, palette=colors)
+plt.title('Median Revenue by Runtime')
+plt.xlabel('Runtime')
+plt.ylabel("Median Revenue")
+```
+
+## Genre Analysis
+
+Join provided IMDB datasets with `movies_df` created with the API calls to TMDB to pull in genre and average rating detail for our list of Movie IDs (joined DF is called `genres_df`. Clean dataframe, handle missing values, duplicates, and NaNs. Group `genres_df` by genre aggregating statistics using both `.sum()` and `.median()`
+
+```
+genres_sum_df = genres_df.groupby('genres').sum()
+genres_median_df = genres_df.groupby('genres').median()
+```
+
+Sort dataframes by revenue and plot visualizations. 
+
+```
+fig = plt.figure(figsize=(10, 5))
+colors = ['darkred' for i in range(10)]
+
+sns.barplot(x=genres_sum_df.index[:10], 
+            y='revenue', 
+            data=genres_sum_df[:10],
+            palette=colors)
+
+plt.xticks(rotation=90)
+plt.title('Highest Grossing Genres / Genre Combinations')
+plt.xlabel('Genres / Genre Combinations')
+plt.ylabel('Sum of Revenue')
+```
+
+replace `data=genres_sum_df` with `data=genres_median_df` to create charts for median aggregate statistics, and update titles accordingly.  Repeat, and use the `averagerating` column in place of `revenue` to run the same analysis on ratings
+
+## Gross Domestic Spend Analysis
+Using dataframe created from Web Scrape of Box Office Mojo, group by year, summing gross domestic spend to show annual spend trends over time and create visualization.
+
+```
+year_df = domestic_spend_df.groupby('year', as_index=False).sum()
+plt.figure(figsize=(10, 5))
+sns.scatterplot(x='year', y='gross_dom_spend', data=year_df)
+plt.title('Gross Domestic Spend Over Time')
+plt.ylabel('Gross Domestic Spend')
+plt.xlabel('Year')
+```
+
+Create a date column from month and year columns, convert to datetime and plot monthly gross domestic spend. 
+
+```
+domestic_spend_df['date'] = domestic_spend_df['year'] + '-' + domestic_spend_df['month'] + '-1'
+import datetime as dt
+domestic_spend_df['date'] = domestic_spend_df['date'].apply(lambda x: dt.datetime.strptime(x, '%Y-%m-%d'))
+
+plt.figure(figsize=(15, 5))
+ax = sns.scatterplot(x='date', y='gross_dom_spend', data=domestic_spend_df)
+plt.title('Gross Domestic Spend Over Time')
+plt.xlabel('Year')
+plt.ylabel('Gross Domestic Spend')
+plt.show()
+```
+
+Group dataframe by month to evaluate seasonality of gross domestic spend throughout the year
+
+```
+plt.figure(figsize=(15, 5))
+xticks = np.arange(1,13)
+sns.lineplot(x='month', y='gross_dom_spend', data=domestic_spend_df)
+plt.title('Gross Domestic Spend Seasonality')
+xlabels = ['January', 'February', 'March', 'April', 
+           'May', 'June', 'July', 'August', 'September', 
+           'October', 'November', 'December']
+plt.xticks(ticks=xticks, labels=xlabels)
+plt.xlabel('Month')
+plt.ylabel('Gross Domestic Spend')
+plt.show()
+```
+
+Finally, produce boxplots on gross domestic spend for each month to compare distributions and variance.
+
+```
+plt.figure(figsize=(15, 5))
+colors = ['lightsalmon' if (x < 5) |  (x > 7) else 'darkred' for x in range(12)]
+
+sns.boxplot(x='month', y='gross_dom_spend', data=domestic_spend_df, palette=colors)
+xticks = np.arange(12)
+xlabels = ['January', 'February', 'March', 'April', 
+           'May', 'June', 'July', 'August', 'September', 
+           'October', 'November', 'December']
+
+plt.xticks(ticks=xticks, labels=xlabels)
+plt.title('Gross Domestic Spend by Month')
+plt.xlabel('Month')
+plt.ylabel('Gross Domestic Spend')
+```
+
+## Writers Analysis
+
+Use provided IMDB datasets and `movies_df` created through API calls to TMDB.  
+Join  Expand crew dataframe to present each writer of a movie on their own row to create `writers` dataframe. 
+
+```
+imdb_title_crew['writers_list'] = imdb_title_crew['writers'].apply(lambda x: str(x).split(','))
+
+list_col = 'writers_list'
+movie_ids = np.repeat(imdb_title_crew['tconst'].values,
+                      imdb_title_crew[list_col].str.len())
+writers_ids = np.concatenate(imdb_title_crew[list_col].values)
+writers = pd.DataFrame(writers_ids)
+```
+
+I created a `small_movies_df` that only contains `imdb_id` and `revenue`.  Group small_movies_df by `imdb_id ` and join with df containing writer names and IDs.  
+
+```
+writer_details_df = imdb_name_basics.join(small_movies_df)
+```
+
+Finally, group `writer_details_df` by writer name and calculate median aggregate statistics. Create visualizations.
+
+```
+fig=plt.figure(figsize=(10, 5))
+colors = ['darkred' for i in range(10)]
+
+sns.barplot(x=grouped_writers['primary_name'][:10],
+            y='revenue', 
+            data=grouped_writers[:10],
+            palette=colors)
+
+plt.xticks(rotation=90)
+plt.title('Highest Grossing Writers')
+plt.xlabel('Writers')
+plt.ylabel('Median Revenue')
+plt.show()
+```
+
+## Recommendations
+Target summer or winter releases to coincide with spikes in gross domestic box office spend and benefit from consumer spending tailwinds
+
+![Gross Domestic Spend Seasonlity](/Visualizations/rev_runtime_2.png)
+
+Target runtime lengths between 2 and 3 hours
+
+![Runtimes](/Visualizations/14.png)
+
+Create movies that fall into either of the following two genres:
+ - Family/Fantasy/Musical to maximize potential revenue generation
+
+![High Revenue Genres](/Visualizations/4.png)
 
 
-### Non-Technical Presentation Must-Haves
+ - Comedy/Documentary/Sport to maximize consumer sentiment
 
-Another deliverable should be a Keynote, PowerPoint or Google Slides presentation delivered as a pdf file in your fork of this repository with the file name of `presentation.pdf` detailing the results of your project.  Your target audience is non-technical people interested in using your findings to make decisions for creating movies.
+![High Average Rating Genres](/Visualizations/9.png)
 
-Your presentation should:
+Depending on budget constraints hire one of the following 5 writers
+ - Michael Crichton
+ - Jim Starlin
+ - Joe Robert Cole
+ - Colin Trevorrow
+ - Chris Buck
 
-* Contain between 5 - 10 professional-quality slides.  
-    * **Level Up**: The slides should use visualizations whenever possible, and avoid walls of text.
-* Take no more than 5 minutes to present.   
-* Avoid technical jargon and explain the results in a clear, actionable way for non-technical audiences.   
+![Writers](/Visualizations/20.png)
 
-### Blog Post Must-Haves
-
-Refer back to the [Blogging Guidelines](https://github.com/learn-co-curriculum/dsc-welcome-blogging-v2-1) for the technical requirements and blog ideas.
-
-
-
-## The Process
-(Note: On-campus students may have different processes, please speak with your instructor)
-
-### 1. Getting Started
-
-Please start by reviewing this document. If you have any questions, please ask them in Slack ASAP so (a) we can answer the questions and (b) so we can update this repository to make it clearer.
-
-Be sure to let the instructor team know when you’ve started working on a project, either by reaching out over Slack or, if you are in a full-time or part-time cohort, by connecting with your Cohort Lead in your weekly 1:1. If you’re not sure who to reach out to, post in the #online-ds-sp-000 channel in Slack.
-
-Once you're done with the 10 sections in module 1, please start on the project. Do that by forking this repository, cloning it locally, and working in the `student.ipynb` file. Make sure to also add and commit a pdf of your presentation to the repository with a file name of `presentation.pdf`.
-
-### 2. The Project Review
-
-_Note: On-campus students may have different review processes, please speak with your instructor._
-
-> **When you start on the project, please also reach out to an instructor immediately to schedule your project review** (if you're not sure who to schedule with, please ask in Slack!)
-
-#### What to expect from the Project Review
-
-Project reviews are focused on preparing you for technical interviews. Treat project reviews as if they were technical interviews, in both attitude and technical presentation *(sometimes technical interviews will feel arbitrary or unfair - if you want to get the job, commenting on that is seldom a good choice)*.
-
-The project review is comprised of a 45 minute 1:1 session with one of the instructors. During your project review, be prepared to:
-
-#### 1. Deliver your PDF presentation to a non-technical stakeholder.
-In this phase of the review (~10 mins) your instructor will play the part of a non-technical stakeholder that you are presenting your findings to. The presentation  should not exceed 5 minutes, giving the "stakeholder" 5 minutes to ask questions.
-
-In the first half of the presentation (2-3 mins), you should summarize your methodology in a way that will be comprehensible to someone with no background in data science and that will increase their confidence in you and your findings. In the second half (the remaining 2-3 mins) you should summarize your findings and be ready to answer a couple of non-technical questions from the audience. The questions might relate to technical topics (sampling bias, confidence, etc) but will be asked in a non-technical way and need to be answered in a way that does not assume a background in statistics or machine learning. You can assume a smart, business stakeholder, with a non-quantitative college degree.
-
-#### 2. Go through the Jupyter Notebook, answering questions about how you made certain decisions. Be ready to explain things like:
-    * "How did you pick the question(s) that you did?"
-    * "Why are these questions important from a business perspective?"
-    * "How did you decide on the data cleaning options you performed?"
-    * "Why did you choose a given method or library?"
-    * "Why did you select those visualizations and what did you learn from each of them?"
-    * "Why did you pick those features as predictors?"
-    * "How would you interpret the results?"
-    * "How confident are you in the predictive quality of the results?"
-    * "What are some of the things that could cause the results to be wrong?"
-
-Think of the first phase of the review (~30 mins) as a technical boss reviewing your work and asking questions about it before green-lighting you to present to the business team. You should practice using the appropriate technical vocabulary to explain yourself. Don't be surprised if the instructor jumps around or sometimes cuts you off - there is a lot of ground to cover, so that may happen.
-
-If any requirements are missing or if significant gaps in understanding are uncovered, be prepared to do one or all of the following:
-* Perform additional data cleanup, visualization, feature selection, modeling and/or model validation
-* Submit an improved version
-* Meet again for another Project Review
-
-What won't happen:
-* You won't be yelled at, belittled, or scolded
-* You won't be put on the spot without support
-* There's nothing you can do to instantly fail or blow it
-
-**Please note: We need to receive the URL of your repository at least 24 hours before and please have the project finished at least 3 hours before your review so we can look at your materials in advance.**
-
-
-## Submitting your Project
-
- You’re almost done! In order to submit your project for review, include the following links to your work in the corresponding fields on the right-hand side of Learn.
-
- 1. **GitHub Repo:** Now that you’ve completed your project in Jupyter Notebooks, push your work to GitHub and paste that link to the right. (If you need help doing so, review the resources [here](https://docs.google.com/spreadsheets/d/1CNGDhjcQZDRx2sWByd2v-mgUOjy13Cd_hQYVXPuzEDE/edit#gid=0).)
-_Reminder: Make sure to also add and commit a pdf of your non-technical presentation to the repository with a file name of presentation.pdf._
-2. **Blog Post:** Include a link to your blog post.
-3. **Record Walkthrough:** Include a link to your video walkthrough.
-
- Hit "I'm done" to wrap it up. You will receive an email in order to schedule your review with your instructor.
-
-## Grading Rubric
-
-Online students can find a PDF of the grading rubric for the project [here](https://github.com/learn-co-curriculum/dsc-mod-1-project-v2-1/blob/master/module1_project_rubric.pdf). On-campus students may have different review processes, please speak with your instructor.
-
-
-## Summary
-
-The end of module projects and project reviews are a critical part of the program. They give you a chance to both bring together all the skills you've learned into realistic projects and to practice key "business judgement" and communication skills that you otherwise might not get as much practice with.
-
-The projects are serious and important. They are not graded, but they can be passed and they can be failed. Take the project seriously, put the time in, ask for help from your peers or instructors early and often if you need it, and treat the review as a job interview and you'll do great. We're rooting for you to succeed and we're only going to ask you to take a review again if we believe that you need to. We'll also provide open and honest feedback so you can improve as quickly and efficiently as possible.
-
-Finally, this is your first project. We don't expect you to remember all of the terms or to get all of the answers right. If in doubt, be honest. If you don't know something, say so. If you can't remember it, just say so. It's very unusual for someone to complete a project review without being asked a question they're unsure of, we know you might be nervous which may affect your performance. Just be as honest, precise and focused as you can be, and you'll do great!
