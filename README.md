@@ -49,12 +49,12 @@ For the scope of this project, I have used revenue and average ratings as measur
 ## Collecting the Data
 
 Data used in this project comes from three sources:
-1. API Calls to !**[The Movie DB (TMDB)](https://www.themoviedb.org/documentation/api)**
-2. Data scraped from !**[Box Office Mojo](https://www.boxofficemojo.com/)**
+1. API Calls to **[The Movie DB (TMDB)](https://www.themoviedb.org/documentation/api)**
+2. Data scraped from **[Box Office Mojo](https://www.boxofficemojo.com/)**
 3. IMDB CSV files provided by Flatiron
 
 ### TMDB API Calls
-Pull movie data from 2000 to YTD 2020 using TMDB API.  Following API instructions provided by !**[TMDB](https://www.themoviedb.org/documentation/api)**, register for API Key and use API Key to generate Access Token.  
+Pull movie data from 2000 to YTD 2020 using TMDB API.  Following API instructions provided by **[TMDB](https://www.themoviedb.org/documentation/api)**, register for API Key and use API Key to generate Access Token.  
 
 Create headers with access token to authorize API requests. 
 
