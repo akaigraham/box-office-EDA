@@ -341,7 +341,7 @@ writers_ids = np.concatenate(imdb_title_crew[list_col].values)
 writers = pd.DataFrame(writers_ids)
 ```
 
-I created a `small_movies_df` that only contains `imdb_id` and `revenue`.  Group small_movies_df by `imdb_id ` and join with df containing writer names and IDs.  
+I created a `small_movies_df` that only contains `imdb_id` and `revenue`.  Group `small_movies_df` by `imdb_id ` and join with df containing writer names and IDs.  
 
 ```
 writer_details_df = imdb_name_basics.join(small_movies_df)
