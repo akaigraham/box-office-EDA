@@ -123,7 +123,7 @@ movies = movies.loc[movies['release_date'] <= '2020-05-22']
 movies.drop_duplicates(subset='id', inplace=True)
 ```
 
-Pull in additional movie data.  Loop through all movie IDs in the dataframe and for each one, call Movie API (!**[Documentation](https://developers.themoviedb.org/3/movies/get-movie-details)**).  Using parameters laid out in documentation did not work for me, so I resorted to using an f string to add the proper URL suffix:
+Pull in additional movie data.  Loop through all movie IDs in the dataframe and for each one, call Movie API (**[Documentation](https://developers.themoviedb.org/3/movies/get-movie-details)**).  Using parameters laid out in documentation did not work for me, so I resorted to using an f string to add the proper URL suffix:
 
 ```
 movie_details = []
@@ -140,7 +140,7 @@ movies_df = pd.DataFrame(movie_details)
 ```
 
 ### Web Scraping Box Office Mojo
-!**[Box Office Mojo](https://www.boxofficemojo.com/)** presents a number of box office statistics on its website. To pull this data into a useable format, I scraped Box Office Mojo using BeautifulSoup. 
+**[Box Office Mojo](https://www.boxofficemojo.com/)** presents a number of box office statistics on its website. To pull this data into a useable format, I scraped Box Office Mojo using BeautifulSoup. 
 
 ```
 from bs4 import BeautifulSoup
