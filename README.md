@@ -329,7 +329,7 @@ plt.ylabel('Gross Domestic Spend')
 ## Writers Analysis
 
 Use provided IMDB datasets and `movies_df` created through API calls to TMDB.  
-Join  Expand crew dataframe to present each writer of a movie on their own row to create `writers` dataframe. 
+Expand crew dataframe to present each writer of a movie on their own row to create `writers` dataframe. 
 
 ```
 imdb_title_crew['writers_list'] = imdb_title_crew['writers'].apply(lambda x: str(x).split(','))
