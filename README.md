@@ -25,11 +25,12 @@ Explore what type of films are currently doing the best at the box office, and t
 Within this github repository you will find the following files:
 1. `README.md`
 2. `student.ipynb` - jupyter notebook containing all code and analyses
-3. `placeholder for presentation` - non-technical presentation presenting findings, and recommendations
+3. `presentation.pdf` - non-technical presentation presenting findings, and recommendations
 4. `imdb.title.ratings.csv` - CSV file containing data from IMDB, includes: IMDB Movie ID, Average Rating, and Number of Votes
 5. `imdb.title.crew.csv` - CSV file containing data from IMDB, includes: IMDB Movie IDs, Director IDs, and Writer IDs
 6. `imdb.name.basics.csv` - CSV file containing data on actors, writers, producers, etc. from IMDB, includes: IMDB Movie IDs, Primary Name of Individual, Birth Year of Individual, Death Year of Individual, Primary Profession of Individual, and Known For Titles (movies the individual is associated with)
-7. `Visualizations` - directory containing image files used throughout this README
+7. `imdb.title.basics.csv` - CSV file containing data from IMDB, includes: IMDB Movies ID, Primary Title, Original Title, Runtime in Minutes, and Genres
+8. `.png` files - png files of visualizations used in presentation
 
 ## Project Objectives
 
@@ -91,8 +92,8 @@ def get_movies_data(start_date, end_date, url, headers):
     df = pd.DataFrame()
     num_pages = get_num_pages(url, headers, start_date, end_date)
     for i in range(1, num_pages+1):
-        parameters = {'primary_release_date.gte': start_date,
-                      'primary_release_data.lte': end_date,
+        parameters = {'release_date.gte': start_date,
+                      'release_data.lte': end_date,
                       'page': i}
         request = requests.get(url, headers=headers, params=parameters).json()
         df = pd.concat([df, pd.DataFrame(request['results'])], sort=False)
@@ -115,8 +116,9 @@ for i, start_date in enumerate(start_dates):
     update_progress(i / (len(start_dates)-1))
 ```
 
-Remove movies with release dates in the future and drop duplicate IDs
+Copy dataframe to `movies`, remove movies with release dates in the future and drop duplicate IDs
 ```
+movies = df.copy()
 movies = movies.loc[movies['release_date'] <= '2020-05-22']
 movies.drop_duplicates(subset='id', inplace=True)
 ```
@@ -200,7 +202,7 @@ imdb_title_ratings = pd.read_csv('imdb.title.ratings.csv')
 ```
 
 ## Movie Runtime Analysis
-Use dataframe created from API calls.  Clean dataframe, handle missing values, duplicates, and NaNs. Create subsets of the dataframe for different runtime buckets.
+Use dataframe created from API calls.  Clean dataframe, handle missing values, duplicates, and NaNs. Create subsets of the dataframe for different runtime buckets. I chose to remove any movies with runtimes over 2x Standard Deviation, so we are not influenced by outliers.  I was comfortable doing this as the mean and median were very similar values. 
 
 ```
 movies_lt_30 = runtime_df.loc[runtime_df['runtime'] <= 30]
@@ -370,24 +372,24 @@ Target summer or winter releases to coincide with spikes in gross domestic box o
 
 Target runtime lengths between 2 and 3 hours
 
-![Runtimes](rev_runtime_2.png)
+![Runtimes](rev_vs_runtime.png)
 
 Create movies that fall into either of the following two genres:
  - Family/Fantasy/Musical to maximize potential revenue generation
 
-![High Revenue Genres](median_rev.png)
+![High Revenue Genres](genre_median_revenue.png)
 
 
- - Comedy/Documentary/Sport to maximize consumer sentiment
+ - Comedy/Documentary/Music to maximize consumer sentiment
 
-![High Average Rating Genres](median_rating.png)
+![High Average Rating Genres](median_ratings_genre.png)
 
 Depending on budget constraints hire one of the following 5 writers
  - Michael Crichton
  - Jim Starlin
  - Joe Robert Cole
  - Colin Trevorrow
- - Chris Buck
+ - Shane Morris
 
 ![Writers](writers.png)
 
