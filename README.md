@@ -372,7 +372,7 @@ Target summer or winter releases to coincide with spikes in gross domestic box o
 
 Target runtime lengths between 2 and 3 hours
 
-![Runtimes](rev_vs_runtime.png)
+![Runtimes](median_rev_by_runtime.png)
 
 Create movies that fall into either of the following two genres:
  - Family/Fantasy/Musical to maximize potential revenue generation
