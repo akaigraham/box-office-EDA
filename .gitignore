@@ -6,6 +6,9 @@ __pycache__/
 # datasets
 data/
 
+# .learn
+.learn
+
 # DS_Store
 .DS_Store
 
