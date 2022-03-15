@@ -7,7 +7,7 @@ __pycache__/
 data/
 
 # API keys
-.secret
+.secret/
 
 # .learn
 .learn
