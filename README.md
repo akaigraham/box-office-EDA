@@ -56,14 +56,14 @@ Data used in this project comes from three sources:
 ### TMDB API Calls
 Pull movie data from 2000 to YTD 2020 using TMDB API.  Following API instructions provided by **[TMDB](https://www.themoviedb.org/documentation/api)**, register for API Key and use API Key to generate Access Token.  
 
-Create headers with access token to authorize API requests. 
+Create headers with access token to authorize API requests.
 
 ```
 headers = {'Authorization': 'Bearer {}'.format(access_token)
           ,'Content-Type': 'application/json;charset=utf-8'}
 ```
 
-This API limits the number of results that can be returned in one request to 20 results per page and a maximum of 500 pages.  As a result, pulling 2000 to 2020 data in one request is not possible.  As a work around, split requests into smaller chunks so API can return data in its entirety. 
+This API limits the number of results that can be returned in one request to 20 results per page and a maximum of 500 pages.  As a result, pulling 2000 to 2020 data in one request is not possible.  As a work around, split requests into smaller chunks so API can return data in its entirety.
 
 Create function that returns the number of pages of results returned by API request.
 
@@ -71,7 +71,7 @@ Create function that returns the number of pages of results returned by API requ
 def get_num_pages(url, headers, start_date, end_date):
     """
     Takes as input an API url, headers containing authentication information, a start date, and end date.
-    Returns the number of pages of results returned by the API call as an int. 
+    Returns the number of pages of results returned by the API call as an int.
     """
     params = {'release_date.gte': start_date,
               'release_date.lte': end_date}
@@ -97,7 +97,7 @@ def get_movies_data(start_date, end_date, url, headers):
                       'page': i}
         request = requests.get(url, headers=headers, params=parameters).json()
         df = pd.concat([df, pd.DataFrame(request['results'])], sort=False)
-        
+
     return df
 ```
 
@@ -112,7 +112,7 @@ url = 'https://api.themoviedb.org/3/discover/movie'
 for i, start_date in enumerate(start_dates):
     temp_df = get_movies_data(start_date=start_date, end_date=end_dates[i], url=url, headers=headers)
     df = pd.concat([df, temp_df], sort=False)
-    
+
     update_progress(i / (len(start_dates)-1))
 ```
 
@@ -140,7 +140,7 @@ movies_df = pd.DataFrame(movie_details)
 ```
 
 ### Web Scraping Box Office Mojo
-**[Box Office Mojo](https://www.boxofficemojo.com/)** presents a number of box office statistics on its website. To pull this data into a useable format, I scraped Box Office Mojo using BeautifulSoup. 
+**[Box Office Mojo](https://www.boxofficemojo.com/)** presents a number of box office statistics on its website. To pull this data into a useable format, I scraped Box Office Mojo using BeautifulSoup.
 
 ```
 from bs4 import BeautifulSoup
@@ -171,11 +171,11 @@ for index, month in enumerate(month_list):
     url = f'https://www.boxofficemojo.com/month/{month}/?grossesOption=calendarGrosses'
     html_page = requests.get(url)
     soup = BeautifulSoup(html_page.content, 'html.parser')
-    
+
     for td in soup.findAll('td', class_=year_class):
         years.append(td.text)
         months.append(month)
-    
+
     for index, td in enumerate(soup.findAll('td', class_='a-text-right mojo-field-type-money')):
         if index%3 == 0:
             gross_spend.append(td.text[1:].replace(',', ''))
@@ -202,7 +202,7 @@ imdb_title_ratings = pd.read_csv('imdb.title.ratings.csv')
 ```
 
 ## Movie Runtime Analysis
-Use dataframe created from API calls.  Clean dataframe, handle missing values, duplicates, and NaNs. Create subsets of the dataframe for different runtime buckets. I chose to remove any movies with runtimes over 2x Standard Deviation, so we are not influenced by outliers.  I was comfortable doing this as the mean and median were very similar values. 
+Use dataframe created from API calls.  Clean dataframe, handle missing values, duplicates, and NaNs. Create subsets of the dataframe for different runtime buckets. I chose to remove any movies with runtimes over 2x Standard Deviation, so we are not influenced by outliers.  I was comfortable doing this as the mean and median were very similar values.
 
 ```
 movies_lt_30 = runtime_df.loc[runtime_df['runtime'] <= 30]
@@ -246,14 +246,14 @@ genres_sum_df = genres_df.groupby('genres').sum()
 genres_median_df = genres_df.groupby('genres').median()
 ```
 
-Sort dataframes by revenue and plot visualizations. 
+Sort dataframes by revenue and plot visualizations.
 
 ```
 fig = plt.figure(figsize=(10, 5))
 colors = ['darkred' for i in range(10)]
 
-sns.barplot(x=genres_sum_df.index[:10], 
-            y='revenue', 
+sns.barplot(x=genres_sum_df.index[:10],
+            y='revenue',
             data=genres_sum_df[:10],
             palette=colors)
 
@@ -277,7 +277,7 @@ plt.ylabel('Gross Domestic Spend')
 plt.xlabel('Year')
 ```
 
-Create a date column from month and year columns, convert to datetime and plot monthly gross domestic spend. 
+Create a date column from month and year columns, convert to datetime and plot monthly gross domestic spend.
 
 ```
 domestic_spend_df['date'] = domestic_spend_df['year'] + '-' + domestic_spend_df['month'] + '-1'
@@ -299,8 +299,8 @@ plt.figure(figsize=(15, 5))
 xticks = np.arange(1,13)
 sns.lineplot(x='month', y='gross_dom_spend', data=domestic_spend_df)
 plt.title('Gross Domestic Spend Seasonality')
-xlabels = ['January', 'February', 'March', 'April', 
-           'May', 'June', 'July', 'August', 'September', 
+xlabels = ['January', 'February', 'March', 'April',
+           'May', 'June', 'July', 'August', 'September',
            'October', 'November', 'December']
 plt.xticks(ticks=xticks, labels=xlabels)
 plt.xlabel('Month')
@@ -316,8 +316,8 @@ colors = ['lightsalmon' if (x < 5) |  (x > 7) else 'darkred' for x in range(12)]
 
 sns.boxplot(x='month', y='gross_dom_spend', data=domestic_spend_df, palette=colors)
 xticks = np.arange(12)
-xlabels = ['January', 'February', 'March', 'April', 
-           'May', 'June', 'July', 'August', 'September', 
+xlabels = ['January', 'February', 'March', 'April',
+           'May', 'June', 'July', 'August', 'September',
            'October', 'November', 'December']
 
 plt.xticks(ticks=xticks, labels=xlabels)
@@ -329,7 +329,7 @@ plt.ylabel('Gross Domestic Spend')
 ## Writers Analysis
 
 Use provided IMDB datasets and `movies_df` created through API calls to TMDB.  
-Expand crew dataframe to present each writer of a movie on their own row to create `writers` dataframe. 
+Expand crew dataframe to present each writer of a movie on their own row to create `writers` dataframe.
 
 ```
 imdb_title_crew['writers_list'] = imdb_title_crew['writers'].apply(lambda x: str(x).split(','))
@@ -354,7 +354,7 @@ fig=plt.figure(figsize=(10, 5))
 colors = ['darkred' for i in range(10)]
 
 sns.barplot(x=grouped_writers['primary_name'][:10],
-            y='revenue', 
+            y='revenue',
             data=grouped_writers[:10],
             palette=colors)
 
@@ -368,21 +368,21 @@ plt.show()
 ## Recommendations
 Target summer or winter releases to coincide with spikes in gross domestic box office spend and benefit from consumer spending tailwinds
 
-![Gross Domestic Spend Seasonlity](seasonality.png)
+![Gross Domestic Spend Seasonlity](/data/seasonality.png)
 
 Target runtime lengths between 2 and 3 hours
 
-![Runtimes](median_rev_by_runtime.png)
+![Runtimes](/data/median_rev_by_runtime.png)
 
 Create movies that fall into either of the following two genres:
  - Family/Fantasy/Musical to maximize potential revenue generation
 
-![High Revenue Genres](genre_median_revenue.png)
+![High Revenue Genres](/data/genre_median_revenue.png)
 
 
  - Comedy/Documentary/Music to maximize consumer sentiment
 
-![High Average Rating Genres](median_ratings_genre.png)
+![High Average Rating Genres](/data/median_ratings_genre.png)
 
 Depending on budget constraints hire one of the following 5 writers
  - Michael Crichton
@@ -391,7 +391,7 @@ Depending on budget constraints hire one of the following 5 writers
  - Colin Trevorrow
  - Shane Morris
 
-![Writers](writers.png)
+![Writers](/data/writers.png)
 
 ## Conclusion
 Using data gathered via API calls and web scraping, I focused on what types of movies tend to produce the most revenue and highest average ratings by specifically looking at runtimes, genres, spend seasonality, and writers.  Using the insights generated within this project, the CEO of Microsoft should create a go-to-market strategy that maximizes revenue and ratings per the recommendations.  
