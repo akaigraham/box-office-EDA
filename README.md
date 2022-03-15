@@ -368,21 +368,21 @@ plt.show()
 ## Recommendations
 Target summer or winter releases to coincide with spikes in gross domestic box office spend and benefit from consumer spending tailwinds
 
-![Gross Domestic Spend Seasonlity](/data/seasonality.png)
+![Gross Domestic Spend Seasonlity](/images/seasonality.png)
 
 Target runtime lengths between 2 and 3 hours
 
-![Runtimes](data/median_rev_by_runtime.png)
+![Runtimes](/images/median_rev_by_runtime.png)
 
 Create movies that fall into either of the following two genres:
  - Family/Fantasy/Musical to maximize potential revenue generation
 
-![High Revenue Genres](/data/genre_median_revenue.png)
+![High Revenue Genres](/images/genre_median_revenue.png)
 
 
  - Comedy/Documentary/Music to maximize consumer sentiment
 
-![High Average Rating Genres](/data/median_ratings_genre.png)
+![High Average Rating Genres](/images/median_ratings_genre.png)
 
 Depending on budget constraints hire one of the following 5 writers
  - Michael Crichton
@@ -391,7 +391,7 @@ Depending on budget constraints hire one of the following 5 writers
  - Colin Trevorrow
  - Shane Morris
 
-![Writers](/data/writers.png)
+![Writers](/images/writers.png)
 
 ## Conclusion
 Using data gathered via API calls and web scraping, I focused on what types of movies tend to produce the most revenue and highest average ratings by specifically looking at runtimes, genres, spend seasonality, and writers.  Using the insights generated within this project, the CEO of Microsoft should create a go-to-market strategy that maximizes revenue and ratings per the recommendations.  
